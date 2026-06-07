@@ -1,0 +1,27 @@
+transport: "streamable-http"
+
+log_level: "INFO"
+
+# 记忆存放位置（可改成 Obsidian vault 路径）
+# buckets_dir: "/path/to/your/Obsidian Vault/Ombre Brain"
+
+merge_threshold: 75
+
+dehydration:
+  model: "gemini-2.5-flash"
+  base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+  max_tokens: 1024
+  temperature: 0.1
+  # api_key: set via OMBRE_API_KEY environment variable
+
+decay:
+  lambda: 0.05
+  threshold: 0.3
+  check_interval_hours: 24
+  emotion_weights:
+    base: 1.0
+
+embedding:
+  enabled: true
+  model: "gemini-embedding-001"
+  base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"

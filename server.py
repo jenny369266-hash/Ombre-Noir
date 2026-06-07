@@ -1541,7 +1541,9 @@ async def api_config_update(request):
         dehydrator.model = dehy.get("model", "deepseek-chat")
         dehydrator.base_url = dehy.get("base_url", "")
         dehydrator.api_key = dehy.get("api_key", "")
-        if hasattr(dehydrator, "client") and dehydrator.api_key:
+        # Fix: also update api_available so runtime key injection works
+        dehydrator.api_available = bool(dehydrator.api_key)
+        if dehydrator.api_key:
             from openai import AsyncOpenAI
             dehydrator.client = AsyncOpenAI(
                 api_key=dehydrator.api_key,

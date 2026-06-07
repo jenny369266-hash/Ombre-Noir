@@ -6,7 +6,8 @@ __pycache__/
 .claude/settings.local.json
 .claude/hooks/__pycache__/
 .vscode/
-config.yaml
+# config.yaml is tracked so Railway picks up the correct defaults
+# api_key must still be set via OMBRE_API_KEY environment variable
 buckets/
 *.log
 server.log
