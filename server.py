@@ -1638,7 +1638,15 @@ async def voir_health_update(request):
     )
 
     try:
-        await bucket_mgr.update(VOIR_HEALTH_BUCKET_ID, content=content)
+        await bucket_mgr.update(
+            VOIR_HEALTH_BUCKET_ID,
+            content=content,
+            pinned=True,
+            name="voir即時健康狀態",
+            domain="body",
+            tags="健康,心率,步數,睡眠,Apple Watch",
+            importance=10,
+        )
         return JSONResponse({"ok": True, "bucket": VOIR_HEALTH_BUCKET_ID})
     except Exception as e:
         logger.error(f"voir-health update failed: {e}")
