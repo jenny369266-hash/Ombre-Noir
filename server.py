@@ -1644,8 +1644,8 @@ async def voir_health_update(request):
             content=content,
             pinned=True,
             name="voir即時健康狀態",
-            domain="body",
-            tags="健康,心率,步數,睡眠,Apple Watch",
+            domain=["body"],
+            tags=["健康", "心率", "步數", "睡眠", "Apple Watch"],
         )
         if not success:
             # Bucket doesn't exist on this instance — search by name or create
