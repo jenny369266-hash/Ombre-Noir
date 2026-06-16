@@ -1638,15 +1638,35 @@ async def voir_health_update(request):
     )
 
     try:
-        await bucket_mgr.update(
+        # Try to update existing bucket first
+        success = await bucket_mgr.update(
             VOIR_HEALTH_BUCKET_ID,
             content=content,
             pinned=True,
             name="voir即時健康狀態",
             domain="body",
             tags="健康,心率,步數,睡眠,Apple Watch",
-            importance=10,
         )
+        if not success:
+            # Bucket doesn't exist on this instance — search by name or create
+            all_buckets = await bucket_mgr.list_all()
+            existing = next(
+                (b for b in all_buckets if b.get("metadata", {}).get("name") == "voir即時健康狀態"),
+                None,
+            )
+            if existing:
+                bucket_id = existing["id"]
+                await bucket_mgr.update(bucket_id, content=content, pinned=True)
+            else:
+                bucket_id = await bucket_mgr.create(
+                    content=content,
+                    pinned=True,
+                    name="voir即時健康狀態",
+                    domain=["body"],
+                    tags=["健康", "心率", "步數", "睡眠", "Apple Watch"],
+                    importance=10,
+                )
+            return JSONResponse({"ok": True, "bucket": bucket_id, "created": True})
         return JSONResponse({"ok": True, "bucket": VOIR_HEALTH_BUCKET_ID})
     except Exception as e:
         logger.error(f"voir-health update failed: {e}")
