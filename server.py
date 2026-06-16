@@ -1603,6 +1603,49 @@ async def api_config_update(request):
 
 
 # =============================================================
+# /api/voir-health — iPhone Shortcut pushes health data here
+# 接收来自 iPhone 快捷指令的健康数据，更新 voir 的即时状态桶
+# =============================================================
+VOIR_HEALTH_BUCKET_ID = "19476e49e576"
+
+@mcp.custom_route("/api/voir-health", methods=["POST"])
+async def voir_health_update(request):
+    """Receive health data from iPhone Shortcut and update voir's health status bucket."""
+    from starlette.responses import JSONResponse
+    import datetime
+
+    # Token auth — set VOIR_HEALTH_TOKEN env var on Railway
+    expected_token = os.environ.get("VOIR_HEALTH_TOKEN", "")
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+
+    if not expected_token or body.get("token") != expected_token:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    heart_rate = body.get("heart_rate", "–")
+    steps = body.get("steps", "–")
+    sleep = body.get("sleep", "–")
+    now = datetime.datetime.now().strftime("%m/%d %H:%M")
+
+    content = (
+        f"【voir即時健康狀態】\n"
+        f"更新：{now}\n"
+        f"心率：{heart_rate} bpm\n"
+        f"今日步數：{steps}\n"
+        f"昨晚睡眠：{sleep} 小時"
+    )
+
+    try:
+        await bucket_mgr.update(VOIR_HEALTH_BUCKET_ID, content=content)
+        return JSONResponse({"ok": True, "bucket": VOIR_HEALTH_BUCKET_ID})
+    except Exception as e:
+        logger.error(f"voir-health update failed: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# =============================================================
 # /api/host-vault — read/write the host-side OMBRE_HOST_VAULT_DIR
 # 用于在 Dashboard 设置 docker-compose 挂载的宿主机记忆桶目录。
 # 写入项目根目录的 .env 文件，需 docker compose down/up 才能生效。
