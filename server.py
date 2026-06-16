@@ -1706,8 +1706,8 @@ async def voir_health_update(request):
                     tags=["健康", "心率", "步數", "睡眠", "Apple Watch"],
                     importance=10,
                 )
-            return JSONResponse({"ok": True, "bucket": bucket_id, "created": True})
-        return JSONResponse({"ok": True, "bucket": VOIR_HEALTH_BUCKET_ID})
+            return JSONResponse({"ok": True, "bucket": bucket_id, "created": True, "content": content})
+        return JSONResponse({"ok": True, "bucket": VOIR_HEALTH_BUCKET_ID, "content": content})
     except Exception as e:
         logger.error(f"voir-health update failed: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
