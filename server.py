@@ -1608,6 +1608,31 @@ async def api_config_update(request):
 # =============================================================
 VOIR_HEALTH_BUCKET_ID = "19476e49e576"
 
+
+def _coerce_numbers(value):
+    """Parse a list of floats out of value, which may be a number, a list,
+    or a string with multiple values (newline/comma/space separated).
+
+    iPhone Shortcuts often serializes a "Health Samples" variable as a whole
+    list of raw sample values rather than a single aggregated number, so we
+    accept anything and pull out every number we can find.
+    """
+    import re
+    if value is None:
+        return []
+    if isinstance(value, bool):
+        return []
+    if isinstance(value, (int, float)):
+        return [float(value)]
+    if isinstance(value, list):
+        out = []
+        for v in value:
+            out.extend(_coerce_numbers(v))
+        return out
+    nums = re.findall(r"-?\d+(?:\.\d+)?", str(value))
+    return [float(n) for n in nums]
+
+
 @mcp.custom_route("/api/voir-health", methods=["POST"])
 async def voir_health_update(request):
     """Receive health data from iPhone Shortcut and update voir's health status bucket."""
@@ -1624,17 +1649,32 @@ async def voir_health_update(request):
     if not expected_token or body.get("token") != expected_token:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
 
-    heart_rate = body.get("heart_rate", "–")
-    steps = body.get("steps", "–")
-    sleep = body.get("sleep", "–")
-    now = datetime.datetime.now().strftime("%m/%d %H:%M")
+    # Normalize incoming values: heart rate -> average, steps -> sum,
+    # sleep -> single value if clean, otherwise mark as not recorded.
+    hr_nums = _coerce_numbers(body.get("heart_rate"))
+    steps_nums = _coerce_numbers(body.get("steps"))
+    sleep_nums = _coerce_numbers(body.get("sleep"))
+
+    hr_str = f"{round(sum(hr_nums) / len(hr_nums))} bpm" if hr_nums else "未記錄"
+    steps_str = f"{round(sum(steps_nums))}" if steps_nums else "未記錄"
+    if len(sleep_nums) == 1:
+        sleep_str = f"{sleep_nums[0]:g} 小時"
+    elif len(sleep_nums) > 1:
+        # multiple raw samples — sum as a best-effort total
+        sleep_str = f"{sum(sleep_nums):g} 小時"
+    else:
+        sleep_str = "未記錄（尚未入睡）"
+
+    # Taiwan time (UTC+8)
+    tz = datetime.timezone(datetime.timedelta(hours=8))
+    now = datetime.datetime.now(tz).strftime("%m/%d %H:%M")
 
     content = (
         f"【voir即時健康狀態】\n"
         f"更新：{now}\n"
-        f"心率：{heart_rate} bpm\n"
-        f"今日步數：{steps}\n"
-        f"昨晚睡眠：{sleep} 小時"
+        f"心率：{hr_str}\n"
+        f"今日步數：{steps_str}\n"
+        f"昨晚睡眠：{sleep_str}"
     )
 
     try:
