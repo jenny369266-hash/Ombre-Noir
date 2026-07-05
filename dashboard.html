@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ombre Brain</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -578,157 +576,6 @@
   .flow-step.active { border-color: var(--accent); color: var(--accent); }
   .flow-arrow { color: var(--text-light); font-size: 16px; }
 
-  ::selection { background: var(--accent-glow); color: var(--accent); }
-
-  ::-webkit-scrollbar { width: 9px; height: 9px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background: var(--shadow-dark);
-    border-radius: 5px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-  }
-  ::-webkit-scrollbar-thumb:hover { background-color: var(--border-strong); }
-
-  button:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visible {
-    outline: 2px solid var(--accent-light);
-    outline-offset: 2px;
-  }
-
-  .fade-in { animation: fadeUp 0.3s ease both; }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: none; }
-  }
-
-  .loading::before {
-    content: '◐';
-    display: block;
-    font-size: 24px;
-    margin-bottom: 10px;
-    color: var(--text-light);
-    animation: breathe 1.6s ease-in-out infinite;
-  }
-  @keyframes breathe {
-    0%, 100% { opacity: 0.35; transform: scale(0.94); }
-    50% { opacity: 1; transform: scale(1.06); }
-  }
-  .loading.error { color: var(--negative); }
-  .loading.error::before { content: '✕'; animation: none; color: var(--negative); }
-
-  .empty-state {
-    text-align: center;
-    color: var(--text-light);
-    padding: 60px 20px;
-    font-size: 13px;
-    letter-spacing: 0.3px;
-  }
-  .empty-state .glyph {
-    display: block;
-    font-size: 30px;
-    margin-bottom: 10px;
-    opacity: 0.45;
-  }
-
-  .btn-small {
-    padding: 6px 14px;
-    font-size: 12px;
-    border: none;
-    border-radius: 16px;
-    background: linear-gradient(145deg, #FAF6ED, #EDE4D3);
-    color: var(--text-dim);
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 3px 3px 6px var(--shadow-dark-subtle), -3px -3px 6px var(--shadow-light);
-  }
-  .btn-small:hover {
-    color: var(--accent);
-    transform: translateY(-1px);
-    box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
-  }
-  .btn-small:active {
-    transform: translateY(0);
-    box-shadow: inset 2px 2px 4px var(--shadow-dark-subtle), inset -2px -2px 4px var(--shadow-light);
-  }
-  .btn-small.danger { color: var(--negative); }
-
-  .list-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .list-toolbar .filters { margin-bottom: 0; flex: 1; }
-  .list-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-  .list-actions select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 7px 12px;
-    border-radius: 16px;
-    font-family: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  .list-actions select:hover { color: var(--accent); border-color: var(--border-strong); }
-  .list-actions select:focus { outline: none; border-color: var(--accent); }
-
-  .detail-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(58, 53, 48, 0.18);
-    backdrop-filter: blur(2px);
-    z-index: 99;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-  .detail-backdrop.open { opacity: 1; pointer-events: auto; }
-
-  #toast {
-    position: fixed;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    background: var(--surface-solid);
-    color: var(--text);
-    border: 1px solid var(--border-strong);
-    border-radius: 16px;
-    padding: 12px 24px;
-    font-size: 13px;
-    z-index: 10000;
-    box-shadow: 6px 6px 18px var(--shadow-dark), -4px -4px 12px var(--shadow-light);
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    max-width: 80vw;
-  }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  #toast.error { color: var(--negative); border-color: var(--negative); }
-
-  #import-view h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: 0.3px;
-    margin-bottom: 8px;
-  }
-  #import-upload-zone:hover {
-    border-color: var(--accent);
-    background: var(--surface);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-
   @media (max-width: 768px) {
     .header { padding: 20px; flex-wrap: wrap; }
     .header h1 { font-size: 22px; }
@@ -749,8 +596,6 @@
     .config-row { flex-wrap: wrap; }
     .config-row label { width: 100%; }
     .breath-flow { display: none; }
-    .list-toolbar { flex-direction: column; }
-    .list-actions { width: 100%; justify-content: flex-end; }
   }
 </style>
 </head>
@@ -758,11 +603,11 @@
 
 <div class="header">
   <h1>◐ Ombre Brain</h1>
-  <span class="stats" id="stats">加载中…</span>
+  <span class="stats" id="stats">loading...</span>
   <div class="search-bar">
-    <input type="text" id="search-input" placeholder="搜索记忆…（按 / 聚焦，Esc 清空）" />
+    <input type="text" id="search-input" placeholder="搜索记忆…" />
   </div>
-  <button onclick="doLogout()" title="退出登录" class="btn-small" style="margin-left:12px;">退出</button>
+  <button onclick="doLogout()" title="退出登录" style="margin-left:12px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;">退出</button>
 </div>
 
 <div class="tabs">
@@ -775,18 +620,7 @@
 </div>
 
 <div class="content" id="list-view">
-  <div class="list-toolbar">
-    <div class="filters" id="filters"></div>
-    <div class="list-actions">
-      <select id="sort-select" title="排序方式">
-        <option value="default">默认排序</option>
-        <option value="score">权重 ↓</option>
-        <option value="recent">最近活跃 ↓</option>
-        <option value="name">名称</option>
-      </select>
-      <button class="btn-small" onclick="loadBuckets()" title="重新加载记忆桶">↻ 刷新</button>
-    </div>
-  </div>
+  <div class="filters" id="filters"></div>
   <div class="bucket-list" id="bucket-list">
     <div class="loading">加载中…</div>
   </div>
@@ -817,7 +651,7 @@
 
   <div class="breath-info" id="breath-info" style="display:none"></div>
   <div id="breath-results">
-    <div class="empty-state"><span class="glyph">◐</span>输入 query 后点击「模拟 Breath」查看评分链路</div>
+    <div class="loading">输入 query 后点击「模拟 Breath」查看评分链路</div>
   </div>
 </div>
 
@@ -827,7 +661,6 @@
     <div class="legend-item"><span class="legend-dot" style="background:#9A7B4F"></span> permanent</div>
     <div class="legend-item"><span class="legend-dot" style="background:#8B6A6A"></span> feel</div>
     <div class="legend-item"><span class="legend-dot" style="background:#B0A590"></span> archived</div>
-    <div class="legend-item" style="margin-left:auto;color:var(--text-light);">点击节点可查看详情</div>
   </div>
   <canvas id="network-canvas"></canvas>
 </div>
@@ -862,21 +695,21 @@
         <span>原文: <b id="import-raw">0</b></span>
       </div>
       <div style="margin-top:12px;">
-        <button id="import-pause-btn" class="btn-small" onclick="pauseImport()" style="display:none;">⏸ 暂停</button>
+        <button id="import-pause-btn" onclick="pauseImport()" style="display:none;">⏸ 暂停</button>
       </div>
     </div>
 
     <div id="import-errors" style="display:none;margin:12px 0;padding:12px;background:var(--surface);border-radius:8px;font-size:12px;color:var(--negative);max-height:120px;overflow-y:auto;"></div>
 
     <div id="import-results-section" style="margin:20px 0;">
-      <h3>已导入记忆 <button class="btn-small" onclick="loadImportResults()">↻ 刷新</button></h3>
+      <h3>已导入记忆 <button onclick="loadImportResults()" style="font-size:12px;padding:2px 10px;">刷新</button></h3>
       <div id="import-results-list" style="max-height:500px;overflow-y:auto;"></div>
     </div>
 
     <hr style="border-color:var(--border);margin:24px 0;" />
 
     <h3>高频模式检测</h3>
-    <button class="btn-small" onclick="detectPatterns()">🔍 检测高频模式</button>
+    <button onclick="detectPatterns()">🔍 检测高频模式</button>
     <div id="import-patterns" style="margin-top:16px;"></div>
   </div>
 </div>
@@ -942,9 +775,8 @@
   </div>
 </div>
 
-<div class="detail-backdrop" id="detail-backdrop" onclick="closeDetail()"></div>
 <div class="detail-panel" id="detail-panel">
-  <button class="close-btn" onclick="closeDetail()" title="关闭 (Esc)">✕</button>
+  <button class="close-btn" onclick="closeDetail()">✕</button>
   <div id="detail-content"></div>
 </div>
 
@@ -955,7 +787,7 @@
     <div class="config-section">
       <h3>服务状态</h3>
       <div id="settings-status" style="font-size:13px;color:var(--text-dim);line-height:2;">加载中…</div>
-      <button class="btn-small" onclick="loadSettingsStatus()" style="margin-top:8px;">↻ 刷新状态</button>
+      <button onclick="loadSettingsStatus()" style="margin-top:8px;font-size:12px;padding:4px 12px;">刷新状态</button>
     </div>
 
     <div class="config-section">
@@ -994,14 +826,14 @@
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
         <button class="btn-primary" onclick="saveHostVault()">保存到 .env</button>
-        <button class="btn-small" onclick="loadHostVault()">重新加载</button>
+        <button onclick="loadHostVault()" style="font-size:12px;padding:4px 12px;">重新加载</button>
         <span id="settings-host-vault-msg" style="font-size:12px;"></span>
       </div>
     </div>
 
     <div class="config-section">
       <h3>账号操作</h3>
-      <button class="btn-small danger" onclick="doLogout()">退出登录</button>
+      <button onclick="doLogout()" style="color:var(--negative);border-color:var(--negative);">退出登录</button>
     </div>
 
   </div>
@@ -1031,20 +863,7 @@
   </div>
 </div>
 
-<div id="toast" role="status"></div>
-
 <script>
-// Toast — 轻提示，替代 alert
-let toastTimer;
-function showToast(msg, isError) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.toggle('error', !!isError);
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
-}
-
 // ========================================
 // Auth system / 认证系统
 // ========================================
@@ -1218,23 +1037,17 @@ const BASE = location.origin;
 let allBuckets = [];
 let currentFilter = 'all';
 
-const TAB_VIEWS = { list: 'list-view', breath: 'breath-view', network: 'network-view', config: 'config-view', import: 'import-view', settings: 'settings-view' };
 document.querySelectorAll('.tab').forEach(tab => {
-  tab.tabIndex = 0;
-  tab.setAttribute('role', 'tab');
-  tab.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tab.click(); }
-  });
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     const target = tab.dataset.tab;
-    Object.entries(TAB_VIEWS).forEach(([key, id]) => {
-      const el = document.getElementById(id);
-      const show = key === target;
-      el.style.display = show ? '' : 'none';
-      if (show) { el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in'); }
-    });
+    document.getElementById('list-view').style.display = target === 'list' ? '' : 'none';
+    document.getElementById('breath-view').style.display = target === 'breath' ? '' : 'none';
+    document.getElementById('network-view').style.display = target === 'network' ? '' : 'none';
+    document.getElementById('config-view').style.display = target === 'config' ? '' : 'none';
+    document.getElementById('import-view').style.display = target === 'import' ? '' : 'none';
+    document.getElementById('settings-view').style.display = target === 'settings' ? '' : 'none';
     if (target === 'network') loadNetwork();
     if (target === 'config') loadConfig();
     if (target === 'import') { pollImportStatus(); loadImportResults(); }
@@ -1243,27 +1056,16 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 let searchTimer;
-let searchQuery = '';
-const searchInput = document.getElementById('search-input');
-searchInput.addEventListener('input', (e) => {
+document.getElementById('search-input').addEventListener('input', (e) => {
   clearTimeout(searchTimer);
   const q = e.target.value.trim();
-  searchQuery = q;
   searchTimer = setTimeout(() => {
     if (q) searchBuckets(q);
-    else renderBuckets(filterBuckets(allBuckets));
+    else renderBuckets(allBuckets);
   }, 300);
-});
-searchInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && searchInput.value) {
-    searchInput.value = '';
-    searchQuery = '';
-    renderBuckets(filterBuckets(allBuckets));
-  }
 });
 
 async function loadBuckets() {
-  document.getElementById('bucket-list').innerHTML = '<div class="loading">加载中…</div>';
   try {
     const res = await fetch(BASE + '/api/buckets');
     const data = await res.json();
@@ -1273,10 +1075,9 @@ async function loadBuckets() {
     allBuckets = data;
     updateStats();
     buildFilters();
-    if (searchQuery) searchBuckets(searchQuery);
-    else renderBuckets(filterBuckets(allBuckets));
+    renderBuckets(allBuckets);
   } catch (e) {
-    document.getElementById('bucket-list').innerHTML = '<div class="loading error">加载失败: ' + esc(e.message) + '</div>';
+    document.getElementById('bucket-list').innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
   }
 }
 
@@ -1302,47 +1103,20 @@ function buildFilters() {
     { key: 'digested', label: '🌿 已消化' },
     { key: 'archived', label: '📦 归档' },
   ];
-  var domainKeys = Array.from(domains).slice(0, 10);
-  var validKeys = types.map(function(t) { return t.key; }).concat(domainKeys.map(function(d) { return 'domain:' + d; }));
-  if (validKeys.indexOf(currentFilter) === -1) currentFilter = 'all';
-
   filters.innerHTML = types.map(function(t) {
-    return '<button class="filter-btn ' + (t.key === currentFilter ? 'active' : '') + '" data-filter="' + t.key + '">' + t.label + '</button>';
-  }).join('') + domainKeys.map(function(d) {
-    return '<button class="filter-btn ' + ('domain:' + d === currentFilter ? 'active' : '') + '" data-filter="domain:' + esc(d) + '">' + esc(d) + '</button>';
+    return '<button class="filter-btn ' + (t.key === 'all' ? 'active' : '') + '" data-filter="' + t.key + '">' + t.label + '</button>';
+  }).join('') + Array.from(domains).slice(0, 10).map(function(d) {
+    return '<button class="filter-btn" data-filter="domain:' + d + '">' + d + '</button>';
   }).join('');
 
-  if (!filters.dataset.bound) {
-    filters.dataset.bound = '1';
-    filters.addEventListener('click', function(e) {
-      var btn = e.target.closest('.filter-btn');
-      if (!btn) return;
-      filters.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      renderBuckets(filterBuckets(allBuckets));
-    });
-  }
-}
-
-let currentSort = 'default';
-document.getElementById('sort-select').addEventListener('change', function() {
-  currentSort = this.value;
-  if (searchQuery) searchBuckets(searchQuery);
-  else renderBuckets(filterBuckets(allBuckets));
-});
-
-function sortBuckets(buckets) {
-  if (currentSort === 'default') return buckets;
-  var arr = buckets.slice();
-  if (currentSort === 'score') arr.sort(function(a, b) { return (b.score || 0) - (a.score || 0); });
-  if (currentSort === 'recent') arr.sort(function(a, b) {
-    return new Date(b.last_active || b.created || 0) - new Date(a.last_active || a.created || 0);
+  filters.addEventListener('click', function(e) {
+    var btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    filters.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderBuckets(filterBuckets(allBuckets));
   });
-  if (currentSort === 'name') arr.sort(function(a, b) {
-    return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN');
-  });
-  return arr;
 }
 
 function filterBuckets(buckets) {
@@ -1362,11 +1136,10 @@ function filterBuckets(buckets) {
 function renderBuckets(buckets) {
   var list = document.getElementById('bucket-list');
   if (!buckets.length) {
-    list.innerHTML = '<div class="empty-state"><span class="glyph">◌</span>' +
-      (searchQuery ? '没有匹配「' + esc(searchQuery) + '」的记忆' : '这里还没有记忆') + '</div>';
+    list.innerHTML = '<div class="loading">没有记忆桶</div>';
     return;
   }
-  list.innerHTML = sortBuckets(buckets).map(function(b) {
+  list.innerHTML = buckets.map(function(b) {
     var icon = b.pinned ? '📌' : b.type === 'feel' ? '🫧' : b.digested ? '🌿' : b.resolved ? '💤' : '💭';
     var vPos = Math.round(b.valence * 100);
     var modelV = b.model_valence != null ? ' → V' + b.model_valence.toFixed(1) : '';
@@ -1375,7 +1148,7 @@ function renderBuckets(buckets) {
       '<span class="icon">' + icon + '</span>' +
       '<span class="name" title="' + esc(b.name) + '">' + esc(b.name) + '</span>' +
       '<span class="domain">' + (b.domain || []).join(', ') + '</span>' +
-      '<span class="emotion" title="事件效价 V' + (b.valence != null ? b.valence.toFixed(2) : '—') + (b.model_valence != null ? '，模型视角 V' + b.model_valence.toFixed(2) : '') + '"><span class="v-bar"><span class="v-dot" style="left:' + vPos + '%"></span></span>' + modelV + '</span>' +
+      '<span class="emotion"><span class="v-bar"><span class="v-dot" style="left:' + vPos + '%"></span></span>' + modelV + '</span>' +
       '<span class="score">' + b.score.toFixed(2) + '</span>' +
       '<span class="time">' + timeAgo + '</span>' +
       '<span class="preview">' + esc(b.content_preview) + '</span>' +
@@ -1398,7 +1171,6 @@ async function showDetail(id) {
   var content = document.getElementById('detail-content');
   content.innerHTML = '<div class="loading">加载中…</div>';
   panel.classList.add('open');
-  document.getElementById('detail-backdrop').classList.add('open');
 
   try {
     var res = await fetch(BASE + '/api/bucket/' + id);
@@ -1425,30 +1197,22 @@ async function showDetail(id) {
       '</div>' +
       '<div class="detail-content">' + esc(b.content) + '</div>';
   } catch (e) {
-    content.innerHTML = '<div class="loading error">加载失败: ' + esc(e.message) + '</div>';
+    content.innerHTML = '<div class="loading">加载失败: ' + e.message + '</div>';
   }
 }
 
 function closeDetail() {
   document.getElementById('detail-panel').classList.remove('open');
-  document.getElementById('detail-backdrop').classList.remove('open');
 }
 
 var networkData = null;
-var netHit = null;
-var netCanvas = document.getElementById('network-canvas');
-
-function setupNetworkCanvas() {
-  var ctx = netCanvas.getContext('2d');
-  netCanvas.width = netCanvas.offsetWidth * window.devicePixelRatio;
-  netCanvas.height = netCanvas.offsetHeight * window.devicePixelRatio;
-  ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-  return ctx;
-}
-
 async function loadNetwork() {
-  var ctx = setupNetworkCanvas();
-  var W = netCanvas.offsetWidth, H = netCanvas.offsetHeight;
+  var canvas = document.getElementById('network-canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  var W = canvas.offsetWidth, H = canvas.offsetHeight;
 
   ctx.fillStyle = '#FDFCF0';
   ctx.fillRect(0, 0, W, H);
@@ -1465,43 +1229,6 @@ async function loadNetwork() {
     ctx.fillText('加载失败: ' + e.message, W/2, H/2 + 24);
   }
 }
-
-function redrawNetwork() {
-  if (!networkData) return;
-  var ctx = setupNetworkCanvas();
-  drawNetwork(ctx, netCanvas.offsetWidth, netCanvas.offsetHeight, networkData);
-}
-
-function netNodeRadius(n) { return Math.max(4, Math.min(14, n.score * 0.8)); }
-
-function hitNetworkNode(e) {
-  if (!netHit) return null;
-  var rect = netCanvas.getBoundingClientRect();
-  var x = e.clientX - rect.left, y = e.clientY - rect.top;
-  for (var i = netHit.nodes.length - 1; i >= 0; i--) {
-    var n = netHit.nodes[i], p = netHit.positions[n.id];
-    if (!p) continue;
-    var r = netNodeRadius(n) + 6;
-    if ((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y) <= r * r) return n;
-  }
-  return null;
-}
-
-netCanvas.addEventListener('click', function(e) {
-  var n = hitNetworkNode(e);
-  if (n) showDetail(n.id);
-});
-netCanvas.addEventListener('mousemove', function(e) {
-  netCanvas.style.cursor = hitNetworkNode(e) ? 'pointer' : 'default';
-});
-
-var netResizeTimer;
-window.addEventListener('resize', function() {
-  clearTimeout(netResizeTimer);
-  netResizeTimer = setTimeout(function() {
-    if (document.getElementById('network-view').style.display !== 'none') redrawNetwork();
-  }, 200);
-});
 
 function drawNetwork(ctx, W, H, data) {
   var nodes = data.nodes, edges = data.edges;
@@ -1561,8 +1288,6 @@ function drawNetwork(ctx, W, H, data) {
     });
   }
 
-  netHit = { positions: positions, nodes: nodes };
-
   ctx.fillStyle = '#FDFCF0';
   ctx.fillRect(0, 0, W, H);
 
@@ -1580,7 +1305,7 @@ function drawNetwork(ctx, W, H, data) {
   var colors = { dynamic: '#2F4F4F', permanent: '#9A7B4F', feel: '#8B6A6A', archived: '#B0A590' };
   nodes.forEach(function(n) {
     var p = positions[n.id];
-    var r = netNodeRadius(n);
+    var r = Math.max(4, Math.min(14, n.score * 0.8));
     var color = colors[n.type] || '#2F4F4F';
 
     ctx.beginPath();
@@ -1608,10 +1333,10 @@ function drawNetwork(ctx, W, H, data) {
 }
 
 function esc(s) {
-  if (s == null || s === '') return '';
-  return String(s).replace(/[&<>"']/g, function(c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
 }
 
 function formatTimeAgo(iso) {
@@ -1629,7 +1354,6 @@ function formatTimeAgo(iso) {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeDetail();
   if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
-    if (e.target.matches('input, select, textarea')) return;
     e.preventDefault();
     document.getElementById('search-input').focus();
   }
@@ -1672,7 +1396,7 @@ async function runBreathDebug() {
       (query ? '' : ' &nbsp;|&nbsp; <em>未输入 query，topic 分数全为 0</em>');
 
     if (!data.results.length) {
-      results.innerHTML = '<div class="empty-state"><span class="glyph">◌</span>没有记忆通过阈值</div>';
+      results.innerHTML = '<div class="loading">无结果</div>';
       return;
     }
 
@@ -1707,14 +1431,12 @@ async function runBreathDebug() {
       '</div>';
     }).join('');
   } catch (e) {
-    results.innerHTML = '<div class="loading error">请求失败: ' + esc(e.message) + '</div>';
+    results.innerHTML = '<div class="loading">请求失败: ' + e.message + '</div>';
   }
 }
 
-['breath-query', 'breath-valence', 'breath-arousal'].forEach(function(id) {
-  document.getElementById(id).addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') runBreathDebug();
-  });
+document.getElementById('breath-query').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') runBreathDebug();
 });
 
 async function loadConfig() {
@@ -1757,7 +1479,6 @@ async function saveConfig(persist) {
   if (keyVal) body.dehydration.api_key = keyVal;
 
   var status = document.getElementById('config-status');
-  status.innerHTML = '<span style="color:var(--text-dim)">保存中…</span>';
   try {
     var res = await fetch(BASE + '/api/config', {
       method: 'POST',
@@ -1799,12 +1520,11 @@ async function startImport(file) {
   try {
     const res = await fetch(BASE + '/api/import/upload?preserve_raw=' + (preserveRaw ? '1' : '0'), { method: 'POST', body: fd });
     const data = await res.json();
-    if (data.error) { showToast('导入失败: ' + data.error, true); return; }
-    showToast('已开始导入「' + file.name + '」');
+    if (data.error) { alert('导入失败: ' + data.error); return; }
     document.getElementById('import-progress').style.display = '';
     document.getElementById('import-pause-btn').style.display = '';
     pollImportStatus();
-  } catch (e) { showToast('上传失败: ' + e.message, true); }
+  } catch (e) { alert('上传失败: ' + e.message); }
 }
 
 let importPollTimer;
@@ -1859,26 +1579,26 @@ async function loadImportResults() {
     const res = await fetch(BASE + '/api/import/results?limit=30');
     const data = await res.json();
     if (!data.buckets || !data.buckets.length) {
-      container.innerHTML = '<div class="empty-state"><span class="glyph">◌</span>暂无导入的记忆桶</div>';
+      container.innerHTML = '<p style="color:var(--text-dim)">暂无记忆桶</p>';
       return;
     }
     container.innerHTML = data.buckets.map(b => `
-      <div id="ir-${esc(b.id)}" style="background:var(--surface);border-radius:12px;padding:14px;margin:8px 0;">
+      <div id="ir-${b.id}" style="background:var(--surface);border-radius:12px;padding:14px;margin:8px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <b>${esc(b.name || b.id)}</b>
-          <span style="font-size:11px;color:var(--text-dim);">${esc(b.type)} | ${(b.domain||[]).map(esc).join(',')} | imp:${esc(b.importance)}</span>
+          <b>${b.name || b.id}</b>
+          <span style="font-size:11px;color:var(--text-dim);">${b.type} | ${(b.domain||[]).join(',')} | imp:${b.importance}</span>
         </div>
-        <p style="font-size:13px;margin:6px 0;white-space:pre-wrap;">${esc(b.content)}</p>
-        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">${(b.tags||[]).map(t=>'#'+esc(t)).join(' ')}</div>
+        <p style="font-size:13px;margin:6px 0;white-space:pre-wrap;">${b.content}</p>
+        <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">${(b.tags||[]).map(t=>'#'+t).join(' ')}</div>
         <div style="display:flex;gap:8px;">
-          <button class="btn-small" onclick="reviewAction('${esc(b.id)}','pin')" title="固定为永久记忆">📌 固定</button>
-          <button class="btn-small" onclick="reviewAction('${esc(b.id)}','important')" title="标为重要">⭐ 重要</button>
-          <button class="btn-small" onclick="reviewAction('${esc(b.id)}','noise')" title="标为噪声并resolve">🗑 噪声</button>
-          <button class="btn-small danger" onclick="if(confirm('确定删除？'))reviewAction('${esc(b.id)}','delete')" title="彻底删除">✕ 删除</button>
+          <button onclick="reviewAction('${b.id}','pin')" title="固定为永久记忆">📌 固定</button>
+          <button onclick="reviewAction('${b.id}','important')" title="标为重要">⭐ 重要</button>
+          <button onclick="reviewAction('${b.id}','noise')" title="标为噪声并resolve">🗑 噪声</button>
+          <button onclick="if(confirm('确定删除？'))reviewAction('${b.id}','delete')" title="彻底删除" style="color:var(--negative);">✕ 删除</button>
         </div>
       </div>
     `).join('');
-  } catch(e) { container.innerHTML = '<div class="loading error">加载失败: ' + esc(e.message) + '</div>'; }
+  } catch(e) { container.innerHTML = '<p style="color:var(--negative)">加载失败: ' + e.message + '</p>'; }
 }
 
 async function detectPatterns() {
@@ -1887,22 +1607,22 @@ async function detectPatterns() {
   try {
     const res = await fetch(BASE + '/api/import/patterns');
     const data = await res.json();
-    if (!data.patterns || !data.patterns.length) { container.innerHTML = '<div class="empty-state"><span class="glyph">◌</span>未检测到高频模式</div>'; return; }
+    if (!data.patterns || !data.patterns.length) { container.innerHTML = '<p style="color:var(--text-dim)">未检测到高频模式</p>'; return; }
     container.innerHTML = data.patterns.map(p => `
       <div style="background:var(--surface);border-radius:12px;padding:14px;margin:8px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <b>${esc(p.pattern_name)}</b>
-          <span style="font-size:12px;color:var(--text-dim);">出现 ${esc(p.count)} 次</span>
+          <b>${p.pattern_name}</b>
+          <span style="font-size:12px;color:var(--text-dim);">出现 ${p.count} 次</span>
         </div>
-        <p style="font-size:13px;margin:6px 0;">${esc(p.pattern_content)}</p>
+        <p style="font-size:13px;margin:6px 0;">${p.pattern_content}</p>
         <div style="display:flex;gap:8px;">
-          <button class="btn-small" onclick="reviewAction('${esc(p.bucket_ids[0])}','pin')">📌 固定</button>
-          <button class="btn-small" onclick="reviewAction('${esc(p.bucket_ids[0])}','important')">⭐ 重要</button>
-          <button class="btn-small" onclick="batchReview('${JSON.stringify(p.bucket_ids).replace(/'/g, "\\'").replace(/"/g, '&quot;')}','noise')">🗑 噪声</button>
+          <button onclick="reviewAction('${p.bucket_ids[0]}','pin')">📌 固定</button>
+          <button onclick="reviewAction('${p.bucket_ids[0]}','important')">⭐ 重要</button>
+          <button onclick="batchReview('${JSON.stringify(p.bucket_ids).replace(/'/g, "\\'").replace(/"/g, '&quot;')}','noise')">🗑 噪声</button>
         </div>
       </div>
     `).join('');
-  } catch(e) { container.innerHTML = '<div class="loading error">检测失败: ' + esc(e.message) + '</div>'; }
+  } catch(e) { container.innerHTML = '<p style="color:var(--negative)">检测失败: ' + e.message + '</p>'; }
 }
 
 async function reviewAction(bid, action) {
@@ -1914,9 +1634,7 @@ async function reviewAction(bid, action) {
     // Remove card from UI
     const card = document.getElementById('ir-' + bid);
     if (card) card.style.display = 'none';
-    const labels = { pin: '已固定为永久记忆', important: '已标为重要', noise: '已标为噪声', delete: '已删除' };
-    showToast(labels[action] || '已处理');
-  } catch(e) { showToast('操作失败: ' + e.message, true); }
+  } catch(e) {}
 }
 
 async function batchReview(idsJson, action) {
