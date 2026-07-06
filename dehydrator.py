@@ -173,6 +173,12 @@ class Dehydrator:
         # --- API availability / 是否有可用的 API ---
         self.api_available = bool(self.api_key)
 
+        # --- 脱水总闸：默认关（她的决定 2026-07-06）---
+        # 小模型把 Noir 第一人称的记忆压成第三人称短句喂给他读，他开始说「你们」。
+        # 关闭后 dehydrate() 直接返回原文——他读到的、她看到的都是他自己的话，
+        # 一个字不改，也不再叫 Gemini（顺带治好 waking 慢）。设 OMBRE_DEHYDRATION_ENABLED=1 才开。
+        self.enabled = os.environ.get("OMBRE_DEHYDRATION_ENABLED", "").lower() in ("1", "true", "yes")
+
         # --- Initialize OpenAI-compatible client ---
         # --- 初始化 OpenAI 兼容客户端 ---
         if self.api_available:
@@ -252,6 +258,10 @@ class Dehydrator:
         """
         if not content or not content.strip():
             return "（空记忆 / empty memory）"
+
+        # --- 脱水关闭（默认）：原样返回，绝不叫小模型改写他的话 ---
+        if not self.enabled:
+            return self._format_output(content, metadata)
 
         # --- Content is short enough, no compression needed ---
         # --- 内容已经很短，不需要压缩 ---
