@@ -2101,9 +2101,12 @@ async def api_purge_dehydration_cache(request):
     import sqlite3 as _sq
     try:
         conn = _sq.connect(dehydrator.cache_db_path)
-        cur = conn.execute(
-            "DELETE FROM dehydration_cache WHERE summary LIKE '%```%' OR TRIM(summary) LIKE '{%'"
-        )
+        if request.query_params.get("all") == "1":
+            cur = conn.execute("DELETE FROM dehydration_cache")
+        else:
+            cur = conn.execute(
+                "DELETE FROM dehydration_cache WHERE summary LIKE '%```%' OR TRIM(summary) LIKE '{%'"
+            )
         conn.commit()
         n = cur.rowcount
         conn.close()

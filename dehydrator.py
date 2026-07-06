@@ -263,14 +263,19 @@ class Dehydrator:
         cached = self._get_cached_summary(content)
         if cached:
             # 老缓存里可能存着未渲染的原始 JSON —— 这里也过一遍渲染，自愈
-            return self._format_output(self._render_summary(cached), metadata)
+            rendered = self._render_summary(cached)
+            if "```" in rendered:
+                logger.info(f"dehydrate.v2 cache-hit STILL fenced: head={rendered[:60]!r}")
+            return self._format_output(rendered, metadata)
 
         # --- API dehydration (no local fallback) ---
         # --- API 脱水（无本地降级）---
         if not self.api_available:
             raise RuntimeError("脱水 API 不可用，请配置 OMBRE_API_KEY")
 
-        result = self._render_summary(await self._api_dehydrate(content))
+        raw_api = await self._api_dehydrate(content)
+        result = self._render_summary(raw_api)
+        logger.info(f"dehydrate.v2 fresh: raw_fenced={'```' in raw_api} rendered_fenced={'```' in result}")
         # --- Cache the result ---
         self._set_cached_summary(content, result)
         return self._format_output(result, metadata)
