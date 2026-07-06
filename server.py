@@ -2018,6 +2018,79 @@ async def api_system_status(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# --- Backup export / 备份导出 ---
+# 鉴权走独立的 OMBRE_EXPORT_TOKEN（给 GitHub Actions 定时备份用，跟 Dashboard 登录互不干扰）。
+def _require_export_token(request):
+    from starlette.responses import JSONResponse
+    token = os.environ.get("OMBRE_EXPORT_TOKEN", "")
+    supplied = request.query_params.get("token", "") or request.headers.get("x-export-token", "")
+    if not token or not hmac.compare_digest(supplied, token):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    return None
+
+
+@mcp.custom_route("/api/export", methods=["GET"])
+async def api_export(request):
+    """全量导出（备份用）：所有桶（含归档）的原始内容 + 元数据，附统计。
+    内容保留原始 wikilinks，恢复时不丢信息。"""
+    from starlette.responses import JSONResponse
+    err = _require_export_token(request)
+    if err: return err
+    try:
+        all_buckets = await bucket_mgr.list_all(include_archive=True)
+        out = [
+            {"id": b["id"], "metadata": b.get("metadata", {}), "content": b.get("content", "")}
+            for b in all_buckets
+        ]
+        embedded = 0
+        try:
+            for b in all_buckets:
+                if await embedding_engine.get_embedding(b["id"]) is not None:
+                    embedded += 1
+        except Exception:
+            embedded = -1  # 向量库读不了也不挡备份
+        return JSONResponse({
+            "exported_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "stats": {
+                "buckets": len(out),
+                "embedded": embedded,
+                "embedding_enabled": embedding_engine.enabled,
+            },
+            "buckets": out,
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@mcp.custom_route("/api/backfill-embeddings", methods=["POST"])
+async def api_backfill_embeddings(request):
+    """一次性为存量桶补建向量索引（修好 OMBRE_API_KEY 后跑一次即可）。
+    幂等：已有向量的桶自动跳过，超时了重跑接着补。"""
+    from starlette.responses import JSONResponse
+    err = _require_export_token(request)
+    if err: return err
+    if not embedding_engine.enabled:
+        return JSONResponse({"error": "embedding disabled（OMBRE_API_KEY 未设？)"}, status_code=400)
+    all_buckets = await bucket_mgr.list_all(include_archive=True)
+    done, fail, skip = 0, 0, 0
+    for b in all_buckets:
+        content = b.get("content", "")
+        if not content or not content.strip():
+            skip += 1
+            continue
+        try:
+            if await embedding_engine.get_embedding(b["id"]) is not None:
+                skip += 1
+                continue
+            ok = await embedding_engine.generate_and_store(b["id"], content)
+            if ok: done += 1
+            else: fail += 1
+        except Exception:
+            fail += 1
+        await asyncio.sleep(0.15)  # 别撞免费档限流
+    return JSONResponse({"embedded": done, "failed": fail, "skipped": skip, "total": len(all_buckets)})
+
+
 # --- Entry point / 启动入口 ---
 if __name__ == "__main__":
     transport = config.get("transport", "stdio")
