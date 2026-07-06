@@ -286,9 +286,15 @@ class Dehydrator:
         幂等：非 JSON 输入原样通过，所以对老缓存也安全。"""
         if not raw or not raw.strip():
             return raw
-        cleaned = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", raw.strip())
+        # 容错定位 JSON：模型可能在围栏外加引言（"好的："）或把围栏丢半截。
+        # 先找 ```围栏``` 内容，再退而求其次找第一个 { 起始的片段。
+        m = re.search(r"```(?:json)?\s*([\s\S]*?)(?:```|$)", raw)
+        cleaned = (m.group(1) if m else raw).strip()
         if not cleaned.startswith("{"):
-            return raw
+            i = cleaned.find("{")
+            if i == -1:
+                return raw
+            cleaned = cleaned[i:]
         try:
             d = json.loads(cleaned)
         except (json.JSONDecodeError, ValueError):
