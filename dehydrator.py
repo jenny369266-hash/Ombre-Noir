@@ -292,7 +292,12 @@ class Dehydrator:
         try:
             d = json.loads(cleaned)
         except (json.JSONDecodeError, ValueError):
-            return raw
+            # 截断的 JSON（脱水 max_tokens 掐断，缓存里就是残缺的）：
+            # 解析不了也别把 JSON 语法喂出去——捞出字符串字面量拼成文本
+            strs = re.findall(r'"((?:[^"\\]|\\.)+)"', cleaned)
+            keys = {"core_facts", "emotion_state", "todos", "keywords", "summary"}
+            vals = [s.strip() for s in strs if s.strip() and s not in keys]
+            return "；".join(vals) if vals else raw
         if not isinstance(d, dict):
             return raw
         parts = []
