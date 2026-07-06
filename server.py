@@ -2091,6 +2091,27 @@ async def api_backfill_embeddings(request):
     return JSONResponse({"embedded": done, "failed": fail, "skipped": skip, "total": len(all_buckets)})
 
 
+@mcp.custom_route("/api/purge-dehydration-cache", methods=["POST"])
+async def api_purge_dehydration_cache(request):
+    """清掉被污染的脱水缓存（存着未渲染 JSON 的行），让它们用新管线重新生成。
+    幂等，token 鉴权同备份。"""
+    from starlette.responses import JSONResponse
+    err = _require_export_token(request)
+    if err: return err
+    import sqlite3 as _sq
+    try:
+        conn = _sq.connect(dehydrator.cache_db_path)
+        cur = conn.execute(
+            "DELETE FROM dehydration_cache WHERE summary LIKE '%```%' OR TRIM(summary) LIKE '{%'"
+        )
+        conn.commit()
+        n = cur.rowcount
+        conn.close()
+        return JSONResponse({"purged": n})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # --- Entry point / 启动入口 ---
 if __name__ == "__main__":
     transport = config.get("transport", "stdio")
