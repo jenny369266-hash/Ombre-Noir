@@ -433,13 +433,18 @@ async def _merge_or_create(
     检查是否有相似桶可合并，有则合并，无则新建。
     返回 (桶ID或名称, 是否合并)。
     """
+    # --- 合并总闸：默认关（她的决定 2026-07-07）---
+    # merge 会用小模型把两桶正文揉成一段、重写——他的话会被改。关掉后每条记忆
+    # 各自成桶、原话不动。打标和向量不受影响。设 OMBRE_MERGE_ENABLED=1 才开。
+    merge_on = os.environ.get("OMBRE_MERGE_ENABLED", "").lower() in ("1", "true", "yes")
+
     try:
         existing = await bucket_mgr.search(content, limit=1, domain_filter=domain or None)
     except Exception as e:
         logger.warning(f"Search for merge failed, creating new / 合并搜索失败，新建: {e}")
         existing = []
 
-    if existing and existing[0].get("score", 0) > config.get("merge_threshold", 75):
+    if merge_on and existing and existing[0].get("score", 0) > config.get("merge_threshold", 75):
         bucket = existing[0]
         # --- Never merge into pinned/protected buckets ---
         # --- 不合并到钉选/保护桶 ---
