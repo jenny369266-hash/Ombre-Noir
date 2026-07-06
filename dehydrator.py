@@ -262,17 +262,51 @@ class Dehydrator:
         # --- 先查缓存 ---
         cached = self._get_cached_summary(content)
         if cached:
-            return self._format_output(cached, metadata)
+            # 老缓存里可能存着未渲染的原始 JSON —— 这里也过一遍渲染，自愈
+            return self._format_output(self._render_summary(cached), metadata)
 
         # --- API dehydration (no local fallback) ---
         # --- API 脱水（无本地降级）---
         if not self.api_available:
             raise RuntimeError("脱水 API 不可用，请配置 OMBRE_API_KEY")
 
-        result = await self._api_dehydrate(content)
+        result = self._render_summary(await self._api_dehydrate(content))
         # --- Cache the result ---
         self._set_cached_summary(content, result)
         return self._format_output(result, metadata)
+
+    # ---------------------------------------------------------
+    # Render: JSON summary -> readable prose
+    # 渲染：脱水模型输出的 JSON → 给人（和 Claude）看的自然文本
+    # ---------------------------------------------------------
+    def _render_summary(self, raw: str) -> str:
+        """DEHYDRATE_PROMPT 要求模型输出纯 JSON，但没人把它变回人话——
+        直接注入上下文/页面就是一坨「未渲染的函数」。这里剥掉代码围栏、
+        解析、拼成自然文本。解析不了就原样返回（宁可 raw 也不丢信息）。
+        幂等：非 JSON 输入原样通过，所以对老缓存也安全。"""
+        if not raw or not raw.strip():
+            return raw
+        cleaned = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", raw.strip())
+        if not cleaned.startswith("{"):
+            return raw
+        try:
+            d = json.loads(cleaned)
+        except (json.JSONDecodeError, ValueError):
+            return raw
+        if not isinstance(d, dict):
+            return raw
+        parts = []
+        if d.get("summary"):
+            parts.append(str(d["summary"]).strip())
+        facts = [str(x).strip() for x in (d.get("core_facts") or []) if str(x).strip()]
+        if facts:
+            parts.append("；".join(facts))
+        if d.get("emotion_state"):
+            parts.append(f"情绪：{str(d['emotion_state']).strip()}")
+        todos = [str(x).strip() for x in (d.get("todos") or []) if str(x).strip()]
+        if todos:
+            parts.append("待办：" + "；".join(todos))
+        return "\n".join(parts) if parts else raw
 
     # ---------------------------------------------------------
     # Merge: blend new content into existing bucket
