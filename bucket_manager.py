@@ -196,6 +196,51 @@ class BucketManager:
         return bucket_id
 
     # ---------------------------------------------------------
+    # Exact restore from a backup snapshot (no LLM, no id/timestamp regen)
+    # 从备份快照精确恢复：原样写回，不经任何小模型、不重生成 id/时间戳
+    # ---------------------------------------------------------
+    async def restore_exact(self, bucket: dict) -> str:
+        """按备份里的 {id, metadata, content} 原样写回一个桶文件。
+        用于从快照恢复被误删/被改的记忆——绝不脱水、打标、合并，一个字不改。
+        已存在同 id 的桶会被这份快照覆盖（恢复语义）。"""
+        bid = (bucket.get("id") or "").strip()
+        content = bucket.get("content", "")
+        meta = dict(bucket.get("metadata") or {})
+        if not bid:
+            raise ValueError("restore_exact: missing bucket id")
+        meta["id"] = bid
+
+        # 先删掉可能存在的旧文件（同 id），避免一 id 两文件
+        old = await self.get(bid)
+        if old and old.get("path") and os.path.exists(old["path"]):
+            try:
+                os.remove(old["path"])
+            except OSError:
+                pass
+
+        btype = meta.get("type", "dynamic")
+        pinned = bool(meta.get("pinned"))
+        domain = meta.get("domain") or (["未分类"] if btype != "feel" else [])
+        if btype == "permanent" or pinned:
+            type_dir = self.permanent_dir
+        elif btype == "feel":
+            type_dir = self.feel_dir
+        else:
+            type_dir = self.dynamic_dir
+        primary = "沉淀物" if btype == "feel" else (sanitize_name(domain[0]) if domain else "未分类")
+        target_dir = os.path.join(type_dir, primary)
+        os.makedirs(target_dir, exist_ok=True)
+
+        name = meta.get("name") or bid
+        filename = f"{sanitize_name(name)}_{bid}.md" if name and name != bid else f"{bid}.md"
+        file_path = safe_path(target_dir, filename)
+        post = frontmatter.Post(content, **meta)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(frontmatter.dumps(post))
+        logger.info(f"Restored bucket / 精确恢复记忆桶: {bid} ({name})")
+        return bid
+
+    # ---------------------------------------------------------
     # Read bucket content
     # 读取桶内容
     # Returns {"id", "metadata", "content", "path"} or None

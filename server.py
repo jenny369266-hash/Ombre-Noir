@@ -2115,6 +2115,34 @@ async def api_purge_dehydration_cache(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@mcp.custom_route("/api/restore", methods=["POST"])
+async def api_restore(request):
+    """从备份精确恢复一批桶：body = {"buckets":[{id,metadata,content}, ...]}。
+    原样写回，不脱水/打标/合并。token 鉴权同备份。"""
+    from starlette.responses import JSONResponse
+    err = _require_export_token(request)
+    if err: return err
+    try:
+        body = await request.json()
+        buckets = body.get("buckets") or []
+        done, fail = [], []
+        for b in buckets:
+            try:
+                bid = await bucket_mgr.restore_exact(b)
+                # 重建向量索引（内容变了）；失败不挡恢复
+                try:
+                    if embedding_engine.enabled and b.get("content", "").strip():
+                        await embedding_engine.generate_and_store(bid, b["content"])
+                except Exception:
+                    pass
+                done.append(bid)
+            except Exception as e:
+                fail.append({"id": b.get("id"), "error": str(e)})
+        return JSONResponse({"restored": done, "failed": fail})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # --- Entry point / 启动入口 ---
 if __name__ == "__main__":
     transport = config.get("transport", "stdio")
