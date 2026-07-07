@@ -1638,6 +1638,27 @@ def _coerce_numbers(value):
     return [float(n) for n in nums]
 
 
+@mcp.custom_route("/api/voir-health", methods=["GET"])
+async def voir_health_read(request):
+    """读回 voir 的即时健康状态（给「今天的她」页用）。解析成结构化字段。"""
+    from starlette.responses import JSONResponse
+    import re as _re
+    b = await bucket_mgr.get(VOIR_HEALTH_BUCKET_ID)
+    if not b:
+        return JSONResponse({"ok": False})
+    c = b.get("content", "")
+    def grab(pat):
+        m = _re.search(pat, c)
+        return m.group(1).strip() if m else None
+    return JSONResponse({
+        "ok": True,
+        "updated": grab(r"更新：(.+)"),
+        "hr": grab(r"心率：(.+)"),
+        "steps": grab(r"今日步數：(.+)"),
+        "sleep": grab(r"昨晚睡眠：(.+)"),
+    })
+
+
 @mcp.custom_route("/api/voir-health", methods=["POST"])
 async def voir_health_update(request):
     """Receive health data from iPhone Shortcut and update voir's health status bucket."""
