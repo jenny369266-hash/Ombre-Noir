@@ -499,6 +499,26 @@ async def _merge_or_create(
 # With args: search by keyword + emotion coordinates
 # 有参数：按关键词+情感坐标检索记忆
 # =============================================================
+# --- 目录行：原文开头原样截一段，不经任何模型 ---
+BRIEF_CHARS = 60        # 目录行露出的原文开头字数
+FULL_TOP_N = 3          # 检索/浮现时给全文的条数
+BRIEF_MAX = 12          # 检索时目录行最多几条
+BRIEF_FOOTER = '（带「…共N字」的只是开头，不是全部。要看哪条的原文：breath(bucket_id="那个id")，逗号分隔可一次开几条。）'
+
+
+def _brief_line(b: dict, prefix: str = "") -> str:
+    """一行目录：[bucket_id] 名字｜原文开头…（共N字）。短的直接整条给。"""
+    meta = b.get("metadata", {})
+    text = " ".join(strip_wikilinks(b.get("content", "") or "").split())
+    name = str(meta.get("name", "") or "")
+    label = f"{name}｜" if name and name != b["id"] else ""
+    if len(text) <= BRIEF_CHARS + 20:
+        body = text
+    else:
+        body = f"{text[:BRIEF_CHARS]}…（共{len(text)}字）"
+    return f"{prefix}[bucket_id:{b['id']}] {label}{body}"
+
+
 @mcp.tool()
 async def breath(
     query: str = "",
@@ -508,11 +528,32 @@ async def breath(
     arousal: float = -1,
     max_results: int = 20,
     importance_min: int = -1,
+    bucket_id: str = "",
 ) -> str:
-    """检索/浮现记忆。不传query或传空=自动浮现,有query=关键词检索。max_tokens控制返回总token上限(默认10000)。domain逗号分隔,valence/arousal 0~1(-1忽略)。max_results控制返回数量上限(默认20,最大50)。importance_min>=1时按重要度批量拉取(不走语义搜索,按importance降序返回最多20条)。"""
+    """检索/浮现记忆。不传query或传空=自动浮现,有query=关键词检索。为了省上下文,只有最相关的几条给全文,其余每条只列一行开头(带bucket_id和总字数)——那不是全部,想看哪条的原文就再调一次 breath(bucket_id="那个id"),逗号分隔可一次开多条。max_tokens控制返回总token上限(默认10000)。domain逗号分隔,valence/arousal 0~1(-1忽略)。max_results控制返回数量上限(默认20,最大50)。importance_min>=1时按重要度批量拉取(不走语义搜索,按importance降序返回最多20条)。"""
     await decay_engine.ensure_started()
     max_results = min(max_results, 50)
     max_tokens = min(max_tokens, 20000)
+
+    # --- bucket_id mode: open full text of specific buckets ---
+    # --- 按 id 打开全文：目录行看到想读的，用这个拿原文 ---
+    if bucket_id and bucket_id.strip():
+        ids = [i.strip() for i in bucket_id.replace("，", ",").split(",") if i.strip()][:10]
+        opened = []
+        for bid in ids:
+            try:
+                b = await bucket_mgr.get(bid)
+                if not b:
+                    opened.append(f"[bucket_id:{bid}] 没有这条记忆。")
+                    continue
+                clean_meta = {k: v for k, v in b["metadata"].items() if k != "tags"}
+                full = await dehydrator.dehydrate(strip_wikilinks(b["content"]), clean_meta)
+                await bucket_mgr.touch(bid)
+                opened.append(f"[bucket_id:{bid}] {full}")
+            except Exception as e:
+                logger.warning(f"Open bucket failed / 打开桶失败 {bid}: {e}")
+                opened.append(f"[bucket_id:{bid}] 打不开。")
+        return "\n---\n".join(opened) if opened else "没有给 bucket_id。"
 
     # --- importance_min mode: bulk fetch by importance threshold ---
     # --- 重要度批量拉取模式：跳过语义搜索，按 importance 降序返回 ---
@@ -532,9 +573,13 @@ async def breath(
             return f"没有重要度 >= {importance_min} 的记忆。"
         results = []
         token_used = 0
-        for b in filtered:
+        for i, b in enumerate(filtered):
             if token_used >= max_tokens:
                 break
+            if i >= FULL_TOP_N:
+                imp = b["metadata"].get("importance", 0)
+                results.append(_brief_line(b, f"[importance:{imp}] "))
+                continue
             try:
                 clean_meta = {k: v for k, v in b["metadata"].items() if k != "tags"}
                 summary = await dehydrator.dehydrate(strip_wikilinks(b["content"]), clean_meta)
@@ -546,7 +591,11 @@ async def breath(
                 token_used += t
             except Exception as e:
                 logger.warning(f"importance_min dehydrate failed: {e}")
-        return "\n---\n".join(results) if results else "没有可以展示的记忆。"
+        if not results:
+            return "没有可以展示的记忆。"
+        if len(filtered) > FULL_TOP_N:
+            results.append(BRIEF_FOOTER)
+        return "\n---\n".join(results)
 
     # --- No args or empty query: surfacing mode (weight pool active push) ---
     # --- 无参数或空query：浮现模式（权重池主动推送）---
@@ -566,9 +615,8 @@ async def breath(
         pinned_results = []
         for b in pinned_buckets:
             try:
-                clean_meta = {k: v for k, v in b["metadata"].items() if k != "tags"}
-                summary = await dehydrator.dehydrate(strip_wikilinks(b["content"]), clean_meta)
-                pinned_results.append(f"📌 [核心准则] [bucket_id:{b['id']}] {summary}")
+                # 钉选桶只列目录行（原文开头），全文用 breath(bucket_id=...) 打开
+                pinned_results.append(_brief_line(b, "📌 "))
             except Exception as e:
                 logger.warning(f"Failed to dehydrate pinned bucket / 钉选桶脱水失败: {e}")
                 continue
@@ -632,9 +680,16 @@ async def breath(
         candidates = candidates[:max_results]
 
         dynamic_results = []
-        for b in candidates:
+        for i, b in enumerate(candidates):
             if token_budget <= 0:
                 break
+            if i >= FULL_TOP_N:
+                # 前几条给全文，其余只列目录行（最多 5 条）
+                if i >= FULL_TOP_N + 5:
+                    break
+                score = decay_engine.calculate_score(b["metadata"])
+                dynamic_results.append(_brief_line(b, f"[权重:{score:.2f}] "))
+                continue
             try:
                 clean_meta = {k: v for k, v in b["metadata"].items() if k != "tags"}
                 summary = await dehydrator.dehydrate(strip_wikilinks(b["content"]), clean_meta)
@@ -654,9 +709,10 @@ async def breath(
 
         parts = []
         if pinned_results:
-            parts.append("=== 核心准则 ===\n" + "\n---\n".join(pinned_results))
+            parts.append("=== 核心准则（目录）===\n" + "\n".join(pinned_results))
         if dynamic_results:
             parts.append("=== 浮现记忆 ===\n" + "\n---\n".join(dynamic_results))
+        parts.append(BRIEF_FOOTER)
         return "\n\n".join(parts)
 
     # --- Feel retrieval: domain="feel" is a special channel ---
@@ -720,9 +776,16 @@ async def breath(
 
     results = []
     token_used = 0
-    for bucket in matches:
+    brief_lines = []
+    for i, bucket in enumerate(matches[:max_results]):
         if token_used >= max_tokens:
             break
+        if i >= FULL_TOP_N:
+            # 最相关的几条给全文，其余只列目录行（不 touch，没真的读到）
+            if len(brief_lines) < BRIEF_MAX:
+                tag = "[语义关联] " if bucket.get("vector_match") else ""
+                brief_lines.append(_brief_line(bucket, tag))
+            continue
         try:
             clean_meta = {k: v for k, v in bucket["metadata"].items() if k != "tags"}
             # --- Memory reconstruction: shift displayed valence by current mood ---
@@ -745,6 +808,9 @@ async def breath(
         except Exception as e:
             logger.warning(f"Failed to dehydrate search result / 检索结果脱水失败: {e}")
             continue
+
+    if brief_lines:
+        results.append("=== 还有这些也沾边（目录）===\n" + "\n".join(brief_lines) + "\n" + BRIEF_FOOTER)
 
     # --- Random surfacing: when search returns < 3, 40% chance to float old memories ---
     # --- 随机浮现：检索结果不足 3 条时，40% 概率从低权重旧桶里漂上来 ---
