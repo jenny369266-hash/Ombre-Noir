@@ -519,6 +519,49 @@ def _brief_line(b: dict, prefix: str = "") -> str:
     return f"{prefix}[bucket_id:{b['id']}] {label}{body}"
 
 
+def _literal_hit(query: str, b: dict) -> float:
+    """原文字面命中 0~1：整句出现=1；否则按查询里的词（≥2字）出现的比例。"""
+    meta = b.get("metadata", {})
+    hay = " ".join([
+        str(meta.get("name", "") or ""),
+        " ".join(str(t) for t in (meta.get("tags") or [])),
+        b.get("content", "") or "",
+    ]).lower()
+    q = " ".join(query.lower().split())
+    if not q:
+        return 0.0
+    if q in hay:
+        return 1.0
+    try:
+        import jieba
+        words = {w.strip() for w in jieba.cut(q) if len(w.strip()) >= 2}
+    except Exception:
+        words = {w for w in q.split() if len(w) >= 2}
+    if not words:
+        return 0.0
+    return sum(1 for w in words if w in hay) / len(words)
+
+
+def _rerank(query: str, matches: list, sims: dict) -> list:
+    """关键词通道和向量通道的结果放在一起排，不再「关键词一律在前」。
+    纯算分，不经任何模型。向量不可用时只用关键词分 + 字面命中。"""
+    have_vec = bool(sims)
+
+    def rank(b):
+        lit = _literal_hit(query, b) * 30.0
+        if b.get("vector_match"):
+            kw = 45.0  # 没过关键词门槛（<50）才会只走向量进来
+            sim = float(b.get("score", 0)) / 100.0
+        else:
+            kw = float(b.get("score", 0) or 0)
+            sim = float(sims.get(b["id"], 0.4)) if have_vec else None
+        if sim is None:
+            return kw + lit
+        return 0.4 * kw + 0.6 * sim * 100.0 + lit
+
+    return sorted(matches, key=rank, reverse=True)
+
+
 @mcp.tool()
 async def breath(
     query: str = "",
@@ -761,9 +804,12 @@ async def breath(
     # --- Vector similarity channel: find semantically related buckets ---
     # --- 向量相似度通道：找到语义相关的桶 ---
     matched_ids = {b["id"] for b in matches}
+    sims: dict = {}
     try:
-        vector_results = await embedding_engine.search_similar(query, top_k=max(max_results, 20))
+        vector_results = await embedding_engine.search_similar(query, top_k=50)
         for bucket_id, sim_score in vector_results:
+            sims[bucket_id] = sim_score
+        for bucket_id, sim_score in vector_results[:max(max_results, 20)]:
             if bucket_id not in matched_ids and sim_score > 0.5:
                 bucket = await bucket_mgr.get(bucket_id)
                 if bucket and not (bucket["metadata"].get("pinned") or bucket["metadata"].get("protected")):
@@ -773,6 +819,26 @@ async def breath(
                     matched_ids.add(bucket_id)
     except Exception as e:
         logger.warning(f"Vector search failed, using keyword only / 向量搜索失败: {e}")
+
+    # --- 字面通道：原文里明明白白写着查询词的桶，不该因为模糊分不够而漏掉 ---
+    try:
+        for b in await bucket_mgr.list_all(include_archive=False):
+            if b["id"] in matched_ids:
+                continue
+            m = b["metadata"]
+            if m.get("pinned") or m.get("protected") or m.get("type") == "feel":
+                continue
+            if domain_filter and not ({d.lower() for d in m.get("domain", [])} & {d.lower() for d in domain_filter}):
+                continue
+            if _literal_hit(query, b) >= 1.0:
+                b["score"] = 45.0 * (0.3 if m.get("resolved", False) else 1.0)
+                matches.append(b)
+                matched_ids.add(b["id"])
+    except Exception as e:
+        logger.warning(f"Literal sweep failed / 字面通道失败: {e}")
+
+    # --- 两路合并重排：关键词分 + 向量相似度 + 原文字面命中，谁更相关谁在前 ---
+    matches = _rerank(query, matches, sims)
 
     results = []
     token_used = 0
